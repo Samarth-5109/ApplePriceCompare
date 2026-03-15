@@ -1,9 +1,10 @@
 import React from "react";
 import appleLogo from "@/assets/images/Apple_Computer_Logo_rainbow.svg.png";
 
+
 function Header() {
   return (
-    <div className="flex flex-col items-center gap-4 min-h-screen p-5">
+    <div className="flex flex-col items-center gap-4 p-5">
     <div className="flex items-center gap-2">
       <img
         className="h-[70px] w-[60px]"
