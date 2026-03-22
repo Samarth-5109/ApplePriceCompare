@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import Header from "./components/Header";
 import Card from "./components/Card";
@@ -14,9 +14,47 @@ import {
 } from "./components/ui/select";
 import SecondaryCard from "./components/SecondaryCard";
 import { ArrowDownRight, ArrowRight, Medal } from "lucide-react";
+import {getProductModel, getProductType} from "./api/products";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [selectedModel, setSelectedModel] = useState("");
+  const [products, setProducts] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState("");
+  const [productModels, setProductModels] = useState([])
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await getProductType();
+        setProducts(data);
+
+        if(data.length>0){
+          setSelectedProduct(data[0])
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  useEffect(()=>{
+    if(!selectedProduct)return;
+
+    const fetchModels= async()=>{
+      try{
+        const data= await getProductModel(selectedProduct)
+        setProductModels(data)
+
+        if(data.length>0){
+          setSelectedModel(data[0])
+        }
+      }catch(error){
+        console.log(error)
+      }
+    }
+    fetchModels()
+  },[selectedProduct])
 
   return (
     <>
@@ -33,17 +71,19 @@ function App() {
                   <label className="text-sm font-medium text-gray-700">
                     Product Type
                   </label>
-                  <Select>
+                  <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="iPhone" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="apple">ipad</SelectItem>
-                        <SelectItem value="banana">Macbook</SelectItem>
-                        <SelectItem value="blueberry">Apple Watch</SelectItem>
-                        <SelectItem value="grapes">Airpods</SelectItem>
-                        <SelectItem value="pineapple">Speakers</SelectItem>
+                        {products.map((product) => {
+                          return (
+                            <SelectItem key={product} value={product}>
+                              {product}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -52,17 +92,16 @@ function App() {
                   <label className="text-sm font-medium text-gray-700">
                     Product Model
                   </label>
-                  <Select>
+                  <Select value={selectedModel} onValueChange={setSelectedModel}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="iPhone 15 pro" />
+                      <SelectValue/>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="apple">Apple</SelectItem>
-                        <SelectItem value="banana">Banana</SelectItem>
-                        <SelectItem value="blueberry">Blueberry</SelectItem>
-                        <SelectItem value="grapes">Grapes</SelectItem>
-                        <SelectItem value="pineapple">Pineapple</SelectItem>
+                        {productModels.map((model)=>{
+                          return <SelectItem key={model} value={model}>{model}</SelectItem>
+                        })
+                      }
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -139,15 +178,14 @@ function App() {
                 usd="~ $1336 USD"
               />
               <div className="flex flex-col gap-3 justify-center">
-              <ArrowRight className="mx-auto text-purple-500 w-9 h-9"/>
-              <div className="w-35 h-fit flex flex-col text-center bg-green-200 rounded-lg p-4 gap-2">
-                <ArrowDownRight className="mx-auto text-green-700" />
-                <p className="text-sm font-medium text-green-900">
-                  26.6% cheaper
-                </p>
-                <p className="text-xs text-green-700">in United States</p>
-              </div>
-
+                <ArrowRight className="mx-auto text-purple-500 w-9 h-9" />
+                <div className="w-35 h-fit flex flex-col text-center bg-green-200 rounded-lg p-4 gap-2">
+                  <ArrowDownRight className="mx-auto text-green-700" />
+                  <p className="text-sm font-medium text-green-900">
+                    26.6% cheaper
+                  </p>
+                  <p className="text-xs text-green-700">in United States</p>
+                </div>
               </div>
               <SecondaryCard
                 flag="UAE"
@@ -163,13 +201,14 @@ function App() {
 
           <Card className="bg-yellow-100 mt-6">
             <div className="flex flex-col text-center justify-center items-center gap-2">
-          <div className="flex items-center gap-1">
-            <Medal className="text-yellow-600"/>
-            <p className="text-yellow-700 font-medium">Potential Savings</p>
-          </div>
-          <p className="text-yellow-900 font-bold text-2xl">$266 USD</p>
-          <p className="text-yellow-700 text-sm">by buying in United States</p>
-
+              <div className="flex items-center gap-1">
+                <Medal className="text-yellow-600" />
+                <p className="text-yellow-700 font-medium">Potential Savings</p>
+              </div>
+              <p className="text-yellow-900 font-bold text-2xl">$266 USD</p>
+              <p className="text-yellow-700 text-sm">
+                by buying in United States
+              </p>
             </div>
           </Card>
         </div>
