@@ -14,13 +14,16 @@ import {
 } from "./components/ui/select";
 import SecondaryCard from "./components/SecondaryCard";
 import { ArrowDownRight, ArrowRight, Medal } from "lucide-react";
-import {getProductModel, getProductType} from "./api/products";
+import { getProductModel, getProductType } from "./api/products";
+import countries from "./constants/countries";
 
 function App() {
   const [selectedModel, setSelectedModel] = useState("");
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState("");
-  const [productModels, setProductModels] = useState([])
+  const [productModels, setProductModels] = useState([]);
+  const [country1, setCountry1]= useState("India")
+  const [country2, setCountry2]= useState("United Arab Emirates")
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -28,8 +31,8 @@ function App() {
         const data = await getProductType();
         setProducts(data);
 
-        if(data.length>0){
-          setSelectedProduct(data[0])
+        if (data.length > 0) {
+          setSelectedProduct(data[0]);
         }
       } catch (error) {
         console.log(error);
@@ -38,23 +41,31 @@ function App() {
     fetchProducts();
   }, []);
 
-  useEffect(()=>{
-    if(!selectedProduct)return;
+  useEffect(() => {
+    if (!selectedProduct) return;
 
-    const fetchModels= async()=>{
-      try{
-        const data= await getProductModel(selectedProduct)
-        setProductModels(data)
+    const fetchModels = async () => {
+      try {
+        const data = await getProductModel(selectedProduct);
+        setProductModels(data);
 
-        if(data.length>0){
-          setSelectedModel(data[0])
+        if (data.length > 0) {
+          setSelectedModel(data[0]);
         }
-      }catch(error){
-        console.log(error)
+      } catch (error) {
+        console.log(error);
       }
-    }
-    fetchModels()
-  },[selectedProduct])
+    };
+    fetchModels();
+  }, [selectedProduct]);
+
+  const selectedCountry1= countries.find(
+    (country)=>country.label===country1
+  )
+
+  const selectedCountry2=countries.find(
+    (country)=>country.label===country2
+  )
 
   return (
     <>
@@ -71,7 +82,10 @@ function App() {
                   <label className="text-sm font-medium text-gray-700">
                     Product Type
                   </label>
-                  <Select value={selectedProduct} onValueChange={setSelectedProduct}>
+                  <Select
+                    value={selectedProduct}
+                    onValueChange={setSelectedProduct}
+                  >
                     <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
@@ -92,16 +106,22 @@ function App() {
                   <label className="text-sm font-medium text-gray-700">
                     Product Model
                   </label>
-                  <Select value={selectedModel} onValueChange={setSelectedModel}>
+                  <Select
+                    value={selectedModel}
+                    onValueChange={setSelectedModel}
+                  >
                     <SelectTrigger className="w-full">
-                      <SelectValue/>
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        {productModels.map((model)=>{
-                          return <SelectItem key={model} value={model}>{model}</SelectItem>
-                        })
-                      }
+                        {productModels.map((model) => {
+                          return (
+                            <SelectItem key={model} value={model}>
+                              {model}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -117,17 +137,22 @@ function App() {
               <label className="block text-sm font-medium text-amber-50 mb-2">
                 Country 1
               </label>
-              <Select>
+              <Select 
+              value={country1}
+              onValueChange={setCountry1}
+              >
                 <SelectTrigger className="w-full bg-amber-50 font-bold data-placeholder:text-gray-950">
-                  <SelectValue placeholder="India" />
+                  <SelectValue placeholder="India"/>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="apple">ipad</SelectItem>
-                    <SelectItem value="banana">Macbook</SelectItem>
-                    <SelectItem value="blueberry">Apple Watch</SelectItem>
-                    <SelectItem value="grapes">Airpods</SelectItem>
-                    <SelectItem value="pineapple">Speakers</SelectItem>
+                    {countries.map((country) => {
+                      return (
+                        <SelectItem key={country.label} value={country.label}>
+                          {country.label}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -137,17 +162,22 @@ function App() {
               <label className="block text-sm font-medium text-amber-50 mb-2">
                 Country 2
               </label>
-              <Select>
+              <Select
+              value={country2}
+              onValueChange={setCountry2}
+              >
                 <SelectTrigger className="w-full bg-amber-50 font-bold data-placeholder:text-gray-950">
-                  <SelectValue placeholder="UAE" />
+                  <SelectValue placeholder="United Arab Emirates" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="apple">ipad</SelectItem>
-                    <SelectItem value="banana">Macbook</SelectItem>
-                    <SelectItem value="blueberry">Apple Watch</SelectItem>
-                    <SelectItem value="grapes">Airpods</SelectItem>
-                    <SelectItem value="pineapple">Speakers</SelectItem>
+                    {countries.map((country) => {
+                      return (
+                        <SelectItem key={country.label} value={country.label}>
+                          {country.label}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -159,9 +189,9 @@ function App() {
           <Card className="mt-6">
             <div className="flex flex-col gap-2 items-center">
               <p className="text-xl font-medium bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-                iPhone 15 Pro
+                {selectedModel}
               </p>
-              <p className="text-gray-500">iPhone</p>
+              <p className="text-gray-500">{selectedProduct}</p>
             </div>
           </Card>
 
@@ -170,10 +200,10 @@ function App() {
           <Card className="mt-6">
             <div className="flex justify-between">
               <SecondaryCard
-                flag="IN"
+                flag={selectedCountry1?.flag}
                 color="blue"
-                country="India"
-                currency="INR"
+                country={country1}
+                currency={selectedCountry1?.currency}
                 price="1,30,000"
                 usd="~ $1336 USD"
               />
@@ -188,10 +218,10 @@ function App() {
                 </div>
               </div>
               <SecondaryCard
-                flag="UAE"
+                flag={selectedCountry2?.flag}
                 color="purple"
-                country="UAE"
-                currency="AED"
+                country={country2}
+                currency={selectedCountry2?.currency}
                 price="2,324"
                 usd="~ $1,234 USD"
               />
