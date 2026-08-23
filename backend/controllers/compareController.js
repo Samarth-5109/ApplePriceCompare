@@ -94,10 +94,10 @@ exports.comparePrices = async (req, res) => {
         moreExpensivePrice: moreExpensivePrice
       },
       savings: {
-        country: moreExpensive,
-        amount: moreExpensivePrice - diff,
+        country: cheaper,
+        amount: diff,
         percentage: parseFloat(percentageDiff),
-        currency: "USD"
+        currency: "LOCAL"
       }
     });
   } catch (error) {
