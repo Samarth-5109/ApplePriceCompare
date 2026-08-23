@@ -28,4 +28,17 @@ const getProductModel = async (product) => {
   }
 };
 
-export { getProductType, getProductModel };
+const getComparePrices=async(model, country1, country2)=>{
+  try{
+    const response= await fetch(
+      `${BASE_URL}/api/compare?model=${encodeURIComponent(model)}&country1=${country1}&country2=${country2}`
+    )
+    if(!response.ok) throw new Error(`HTTP ${response.status}`)
+      return await response.json()
+  }catch(error){
+    console.error("Comparison fetch error:", error)
+    throw error
+  }
+};
+
+export { getProductType, getProductModel, getComparePrices };
