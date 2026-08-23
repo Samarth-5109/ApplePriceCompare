@@ -14,7 +14,7 @@ import {
 } from "./components/ui/select";
 import SecondaryCard from "./components/SecondaryCard";
 import { ArrowDownRight, ArrowRight, Medal } from "lucide-react";
-import { getProductModel, getProductType } from "./api/products";
+import { getComparePrices, getProductModel, getProductType } from "./api/products";
 import countries from "./constants/countries";
 
 function App() {
@@ -24,21 +24,30 @@ function App() {
   const [productModels, setProductModels] = useState([]);
   const [country1, setCountry1]= useState("India")
   const [country2, setCountry2]= useState("United Arab Emirates")
+  const [comparison, setComparision]= useState(null)
+  const [loading, setLoading]= useState(false)
+  const [compareError, setCompareError]= useState("")
 
   useEffect(() => {
     const fetchProducts = async () => {
-      try {
-        const data = await getProductType();
-        setProducts(data);
+  try {
+    const data = await getProductType();
 
-        if (data.length > 0) {
-          setSelectedProduct(data[0]);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchProducts();
+    const products = Array.isArray(data)
+      ? data
+      : data?.productTypes || [];
+
+    setProducts(products);
+
+    if (products.length > 0) {
+      setSelectedProduct(products[0]);
+    }
+  } catch (error) {
+    console.error("Failed to fetch products:", error);
+  }
+};
+
+fetchProducts();
   }, []);
 
   useEffect(() => {
@@ -47,10 +56,12 @@ function App() {
     const fetchModels = async () => {
       try {
         const data = await getProductModel(selectedProduct);
-        setProductModels(data);
+         
+        const models=Array.isArray(data)?data:data?.models||[]
+        setProductModels(models);
 
-        if (data.length > 0) {
-          setSelectedModel(data[0]);
+        if (models.length > 0) {
+          setSelectedModel(models[0]);
         }
       } catch (error) {
         console.log(error);
@@ -59,6 +70,27 @@ function App() {
     fetchModels();
   }, [selectedProduct]);
 
+  const countryCode1 = countries.find(c => c.label === country1)?.value;
+const countryCode2 = countries.find(c => c.label === country2)?.value;
+
+  useEffect(()=>{
+    if(!selectedModel||!countryCode1||!countryCode2) return
+
+    const fetchComparision= async()=>{
+      setLoading(true)
+      setCompareError("")
+      try{
+        const data= await getComparePrices(selectedModel, countryCode1, countryCode2)
+        setComparision(data)
+      }catch(error){
+        setCompareError("Failed to fetch comparison.")
+      }finally{
+        setLoading(false)
+      }
+    };
+    fetchComparision()
+  },[selectedModel, countryCode1, countryCode2])
+
   const selectedCountry1= countries.find(
     (country)=>country.label===country1
   )
@@ -66,6 +98,18 @@ function App() {
   const selectedCountry2=countries.find(
     (country)=>country.label===country2
   )
+
+
+
+  const formatCurrency=(amount, currency)=>{
+    switch(currency){
+      case "INR":return `₹${amount.toLocaleString()}`;
+      case "USD":return `$${amount.toLocaleString()}`;
+      case "GBP":return `£${amount.toLocaleString()}`;
+      case "AED":return `AED${amount.toLocaleString()}`;
+      default: return `${currency} ${amount.toLocaleString()}`;
+    }
+  }
 
   return (
     <>
@@ -199,22 +243,26 @@ function App() {
 
           <Card className="mt-6">
             <div className="flex justify-between">
+            {(loading||compareError)?(
+              <p className="text-center text-gray-500">Loading prices...</p>
+            ):comparison?(
+              <>
               <SecondaryCard
                 flag={selectedCountry1?.flag}
                 color="blue"
                 country={country1}
                 currency={selectedCountry1?.currency}
-                price="1,30,000"
-                usd="~ $1336 USD"
+                price={formatCurrency(comparison.comparison.country1.price, selectedCountry1?.currency)}
+                usd={`~ $${comparison.comparison.country1.price.toLocaleString()}USD`}
               />
               <div className="flex flex-col gap-3 justify-center">
                 <ArrowRight className="mx-auto text-purple-500 w-9 h-9" />
                 <div className="w-35 h-fit flex flex-col text-center bg-green-200 rounded-lg p-4 gap-2">
                   <ArrowDownRight className="mx-auto text-green-700" />
                   <p className="text-sm font-medium text-green-900">
-                    26.6% cheaper
+                    {Math.abs(comparison.difference.percentage)}% cheaper
                   </p>
-                  <p className="text-xs text-green-700">in United States</p>
+                  <p className="text-xs text-green-700">in {comparison.difference.cheaperCountry}</p>
                 </div>
               </div>
               <SecondaryCard
@@ -222,12 +270,18 @@ function App() {
                 color="purple"
                 country={country2}
                 currency={selectedCountry2?.currency}
-                price="2,324"
-                usd="~ $1,234 USD"
+                price={formatCurrency(comparison.comparison.country2.price, selectedCountry2?.currency )}
+                usd={`~ $${comparison.comparison.country2.price.toLocaleString()}USD`}
               />
+              </>
+            ):(
+              <p className="text-center text-gray-500">Select a model and countries to compare</p>
+            )}
             </div>
           </Card>
           {/* Savings */}
+          {
+            comparison &&(
 
           <Card className="bg-yellow-100 mt-6">
             <div className="flex flex-col text-center justify-center items-center gap-2">
@@ -235,12 +289,14 @@ function App() {
                 <Medal className="text-yellow-600" />
                 <p className="text-yellow-700 font-medium">Potential Savings</p>
               </div>
-              <p className="text-yellow-900 font-bold text-2xl">$266 USD</p>
+              <p className="text-yellow-900 font-bold text-2xl">{formatCurrency(comparison.savings.amount, "USD")}</p>
               <p className="text-yellow-700 text-sm">
-                by buying in United States
+                by buying in {comparison.savings.country}
               </p>
             </div>
           </Card>
+            )
+          }
         </div>
       </div>
     </>
